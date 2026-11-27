@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BillBook - GST Invoice</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,Roboto,Arial,sans-serif;background:#f3f5f9;color:#14213d;padding-bottom:84px}
+header{background:#fff;border-bottom:1px solid #dfe4ee;padding:14px 16px;display:flex;justify-content:space-between;gap:12px;align-items:center}
+header strong{font-size:22px;color:#1d4ed8}
+main{max-width:720px;margin:auto;padding:16px;display:flex;flex-direction:column;gap:14px}
+.card{background:#fff;border:1px solid #dfe4ee;border-radius:14px;padding:16px}
+h2{font-size:18px;margin:0 0 4px}
+.hint{color:#566079;font-size:14px;margin:0}
+.g{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
+.wide{grid-column:1/-1}
+label{display:flex;flex-direction:column;gap:4px;font-size:14px;font-weight:600;color:#3b465f}
+input,select,textarea{font:inherit;font-size:16px;width:100%;min-height:46px;padding:10px;border:1px solid #bcc5d8;border-radius:9px;background:#fff;color:#14213d}
+input.bad{border-color:#b42318;background:#fff3f2}
+button,.btn{font:inherit;font-weight:600;min-height:46px;padding:10px 16px;border-radius:10px;border:1px solid #1d4ed8;background:#fff;color:#1d4ed8;cursor:pointer;text-decoration:none;text-align:center;display:inline-block}
+button:disabled{opacity:.5}
+.primary{background:#1d4ed8;color:#fff}
+.wa{background:#0b6e4f;border-color:#0b6e4f;color:#fff}
+.danger{border-color:#b42318;color:#b42318}
+.row{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+.row>*{flex:1 1 150px}
+.item{border:1px solid #dfe4ee;border-radius:12px;padding:12px;margin-top:12px}
+.line{display:flex;justify-content:space-between;gap:12px;padding:4px 0}
+.big{font-size:24px;font-weight:700;border-top:2px solid #14213d;margin-top:6px;padding-top:8px}
+nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #dfe4ee;display:flex;justify-content:center;gap:6px;padding:10px}
+nav button{flex:1 1 0;max-width:180px;border:0;color:#3b465f;padding:8px 4px}
+nav button.on,.chips button.on{background:#1d4ed8;color:#fff}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+#err{color:#b42318;background:#fff3f2;border-radius:10px;padding:12px;white-space:pre-line}
+#err:empty,[hidden]{display:none!important}
+#scroll{overflow:hidden;border:1px solid #dfe4ee}
+dialog{border:0;border-radius:16px;padding:20px;width:min(440px,92vw)}
+dialog::backdrop{background:#0008}
+.thumb{max-height:60px;max-width:150px;margin-top:6px}
+</style>
+<style id="invcss">
+/* invoice */
+#inv{font-family:system-ui,Roboto,Arial,sans-serif;width:794px;min-height:1120px;background:#fff;padding:40px;font-size:13px;line-height:1.55;display:flex;flex-direction:column;gap:18px;--c:#0f5c4d;color:#17211f;transform-origin:top left}
+#inv h1{margin:0;font-size:28px;color:var(--c)}
+#inv .head{display:flex;justify-content:space-between;gap:16px;padding-bottom:14px;border-bottom:4px solid var(--c)}
+#inv .r{text-align:right}
+#inv .parties{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+#inv .parties>div{border:1px solid #aab7b4;padding:10px;overflow-wrap:anywhere}
+#inv table{width:100%;border-collapse:collapse}
+#inv th,#inv td{border:1px solid #aab7b4;padding:6px;text-align:right;vertical-align:top}
+#inv .l{text-align:left}
+#inv th{background:#eef2f1}
+#inv .tot{align-self:flex-end;width:310px;display:grid;grid-template-columns:1fr auto;gap:4px 12px}
+#inv .tot b{font-size:19px;border-top:2px solid var(--c);padding-top:6px}
+#inv .foot{margin-top:auto;display:flex;justify-content:space-between;align-items:flex-end;gap:16px;white-space:pre-line}
+/* templates */
+#inv.modern{--c:#1d4ed8}
+#inv.modern .head{background:var(--c);color:#fff;margin:-40px -40px 0;padding:34px 40px;border:0}
+#inv.modern h1{color:#fff}
+#inv.modern th{background:var(--c);color:#fff}
+#inv.modern .parties>div{border:0;background:#eff4ff}
+#inv.elegant{--c:#7a1f3d;font-family:Georgia,'Noto Serif Bengali',serif}
+#inv.elegant .head{flex-direction:column;align-items:center;text-align:center;border-bottom:4px double var(--c)}
+#inv.elegant .head .r{text-align:center}
+#inv.elegant th,#inv.elegant td{border-width:0 0 1px}
+#inv.elegant th{background:none;color:var(--c);border-bottom:2px solid var(--c)}
+#inv.elegant .parties>div{border-width:1px 0 0}
+#inv.minimal{--c:#111}
+#inv.minimal .head{border-bottom:1px solid #111}
+#inv.minimal th,#inv.minimal td{border-width:0 0 1px;border-color:#ddd}
+#inv.minimal th{background:none}
+#inv.minimal .parties>div{border:0;padding:0}
+#inv.bold{--c:#9a3412;border-left:18px solid var(--c)}
+#inv.bold h1{font-size:40px}
+#inv.bold th{background:#17211f;color:#fff}
+#inv.bold tr:nth-child(even) td{background:#fff4ec}
+#inv.bold .tot{background:#fff4ec;padding:12px}
+#inv,#inv *{box-sizing:border-box}
+#inv img.logo{max-height:70px;max-width:180px;display:block;margin-bottom:6px;background:#fff}
+#inv img.sign{max-height:56px;max-width:160px}
+#inv.elegant img.logo{margin-inline:auto}
+#inv p{margin:0;white-space:pre-line}
+
+</style>
+<style>
+@page{size:A4;margin:0}
+@media print{*{-webkit-print-color-adjust:exact;print-color-adjust:exact}body{background:#fff;padding:0}header,nav,#err,.card>:not(#scroll){display:none!important}main{padding:0;margin:0;max-width:none}section[data-tab]:not([data-tab=new]),[data-tab=new]>.card:not(:last-child){display:none!important}.card{border:0;padding:0;margin:0!important}#scroll{overflow:visible;height:auto!important;border:0}#inv{transform:none!important;width:210mm;min-height:296mm}#inv tr,#inv .tot,#inv .foot{break-inside:avoid}}
+</style>
+</head>
+<body>
+<header><strong>BillBook</strong><span class="hint" id="who"></span></header>
+<main>
+<div id="err" role="alert"></div>
+
+<section data-tab="new">
+ <div class="card"><h2>1. Customer</h2><p class="hint">Pick a saved name or type a new one.</p><div class="g" id="cust"></div></div>
+ <div class="card" style="margin-top:14px"><h2>2. Products</h2><p class="hint">Saved products fill in price and GST for you.</p><div id="items"></div><div class="row"><button id="add">+ Add another product</button></div></div>
+ <div class="card" style="margin-top:14px"><h2>3. Check total</h2><div class="g" id="meta"></div><div id="totals" style="margin-top:12px"></div></div>
+ <div class="card" style="margin-top:14px"><h2>4. Choose design and send</h2><div class="chips" id="tpls"></div><div id="scroll"><div id="inv"></div></div>
+  <div class="row"><button class="wa" id="send">Send on WhatsApp</button><button class="primary" id="dl">Download PDF</button></div>
+  <div class="row"><button id="print">Print</button><button id="next">Start new invoice</button></div></div>
+</section>
+
+<section data-tab="history" hidden><div class="card"><h2>Saved invoices</h2><div class="g"><input class="wide" id="q" placeholder="Search name or invoice number" aria-label="Search invoices"></div><div id="list"></div></div></section>
+
+<section data-tab="saved" hidden>
+ <div class="card"><h2>Customers</h2><p class="hint">Added automatically when you download or send an invoice.</p><div id="custs"></div></div>
+ <div class="card" style="margin-top:14px"><h2>Products</h2><p class="hint">Added automatically with their latest price.</p><div id="prods"></div></div>
+</section>
+
+<section data-tab="shop" hidden>
+ <div class="card"><h2>Your shop</h2><p class="hint">Fill this once. It is saved on this device.</p><div class="g" id="shop"></div></div>
+ <div class="card" style="margin-top:14px"><h2>Logo and signature</h2><div class="g" id="images"></div></div>
+ <div class="card" style="margin-top:14px"><h2>Backup</h2><p class="hint">Data stays only in this browser. Save a backup file regularly.</p><div class="row"><button id="backup">Save backup</button><button id="restore">Restore backup</button></div><input type="file" id="file" accept=".json" hidden></div>
+</section>
+</main>
+<nav><button data-go="new">New bill</button><button data-go="history">History</button><button data-go="saved">Saved</button><button data-go="shop">My shop</button></nav>
+
+<dialog id="dlg"><h2>Send on WhatsApp</h2><p class="hint" id="dmsg"></p>
+ <div class="row"><button class="wa" id="chat">Open customer's chat</button></div>
+ <p class="hint">Saves the PDF and opens the chat. In WhatsApp tap the attach icon, choose Document, pick the PDF and send.</p>
+ <div class="row" id="shareRow"><button id="share">Share PDF file</button></div>
+ <p class="hint" id="shareHint">Attaches the PDF for you; you choose the contact in WhatsApp.</p>
+ <div class="row"><button id="close">Close</button></div></dialog>
+
+<script>
+const STATES={'01':'Jammu and Kashmir','02':'Himachal Pradesh','03':'Punjab','04':'Chandigarh','05':'Uttarakhand','06':'Haryana','07':'Delhi','08':'Rajasthan','09':'Uttar Pradesh','10':'Bihar','11':'Sikkim','12':'Arunachal Pradesh','13':'Nagaland','14':'Manipur','15':'Mizoram','16':'Tripura','17':'Meghalaya','18':'Assam','19':'West Bengal','20':'Jharkhand','21':'Odisha','22':'Chhattisgarh','23':'Madhya Pradesh','24':'Gujarat','26':'Dadra and Nagar Haveli and Daman and Diu','27':'Maharashtra','29':'Karnataka','30':'Goa','31':'Lakshadweep','32':'Kerala','33':'Tamil Nadu','34':'Puducherry','35':'Andaman and Nicobar Islands','36':'Telangana','37':'Andhra Pradesh','38':'Ladakh'};
+const CH='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+function gstinCheckChar(s){let sum=0;for(let i=0;i<14;i++){const p=CH.indexOf(s[i])*(i%2?2:1);sum+=Math.floor(p/36)+p%36}return CH[(36-sum%36)%36]}
+function validGstin(g){return /^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(g)&&gstinCheckChar(g)===g[14]}
+// All money is computed in integer paise.
+function calc(items,inter){
+ let taxable=0,cgst=0,sgst=0,igst=0;
+ const lines=items.map(it=>{const gross=Math.round((+it.qty||0)*(+it.rate||0)*100),disc=Math.round(gross*Math.min(100,Math.max(0,+it.disc||0))/100),v=gross-disc,r=+it.gst||0;let tax;
+  if(inter){tax=Math.round(v*r/100);igst+=tax}else{const h=Math.round(v*r/200);cgst+=h;sgst+=h;tax=h*2}
+  taxable+=v;return{...it,gross,disc2:disc,value:v,tax}});
+ const exact=taxable+cgst+sgst+igst,total=Math.round(exact/100)*100;
+ return{lines,taxable,cgst,sgst,igst,roundOff:total-exact,total};
+}
+function words(n){
+ const a=['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'],t=['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+ const w=x=>{if(x<20)return a[x];if(x<100)return (t[x/10|0]+' '+a[x%10]).trim();
+  for(const[d,name]of[[1e7,'Crore'],[1e5,'Lakh'],[1e3,'Thousand'],[100,'Hundred']])if(x>=d)return (w(Math.floor(x/d))+' '+name+' '+w(x%d)).trim()};
+ return n?w(n):'Zero';
+}
+
+const $=id=>document.getElementById(id);
+const today=()=>new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
+const blankItem=()=>({name:'',hsn:'',qty:1,unit:'pcs',rate:'',disc:'',gst:18});
+const blankCust=()=>({name:'',phone:'',address:'',gstin:'',state:''});
+const fresh=()=>({shop:{name:'',gstin:'',state:'19',address:'',phone:'',bank:'',terms:'',logo:'',sign:''},cust:blankCust(),items:[blankItem()],meta:{no:'INV-0001',date:today()},tpl:'classic',history:[],custs:[],prods:[],editing:''});
+let S=fresh(),storageOk=true;
+try{Object.assign(S,JSON.parse(localStorage.getItem('billkhata'))||{})}catch(e){storageOk=false}
+const fail=m=>{$('err').textContent=m;if(m)scrollTo(0,0)};
+const save=()=>{try{localStorage.setItem('billkhata',JSON.stringify(S))}catch(e){fail('Could not save on this device. Storage may be full or blocked.')}};
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money=p=>(p/100).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+const stateOpts=Object.entries(STATES).map(([k,v])=>[k,k+' - '+v]);
+const copy=o=>JSON.parse(JSON.stringify(o));
+const same=(a,b)=>a.trim().toLowerCase()===b.trim().toLowerCase();
+const interstate=d=>(d.cust.state||d.shop.state)!==d.shop.state;
+
+function fields(box,obj,defs,done){
+ box.innerHTML='';
+ for(const[k,text,type,opts,wide]of defs){
+  const l=document.createElement('label');l.textContent=text;if(wide)l.className='wide';
+  const el=document.createElement(type==='select'?'select':type==='area'?'textarea':'input');
+  if(type==='select')el.innerHTML=opts.map(([v,t])=>`<option value="${v}">${t}</option>`).join('');
+  else if(type!=='area')el.type=type||'text';
+  if(type==='number'){el.min=0;el.step='any';el.inputMode='decimal'}
+  if(opts&&type!=='select'){const dl=document.createElement('datalist');dl.id='dl'+Math.random().toString(36).slice(2);dl.innerHTML=opts.map(v=>`<option value="${esc(v)}">`).join('');el.setAttribute('list',dl.id);l.append(dl)}
+  el.value=obj[k]??'';el.dataset.k=k;
+  el.oninput=()=>{
+   if(k==='gstin'){el.value=el.value.toUpperCase().trim();const c=el.value.slice(0,2);if(STATES[c]){obj.state=c;const s=box.querySelector('[data-k=state]');if(s)s.value=c}}
+   obj[k]=el.value;if(done)done(k);mark();save();render()};
+  l.append(el);box.append(l);
+ }
+ function mark(){const g=box.querySelector('[data-k=gstin]');if(g)g.classList.toggle('bad',!!g.value&&!validGstin(g.value))}
+ mark();
+}
+const refill=(box,obj)=>box.querySelectorAll('[data-k]').forEach(e=>{if(e!==document.activeElement)e.value=obj[e.dataset.k]??''});
+
+function forms(){
+ fields($('cust'),S.cust,[['name','Customer name *','text',S.custs.map(c=>c.name),1],['phone','WhatsApp number','tel',null,1],['address','Address','area',null,1],['gstin','GSTIN (optional)'],['state','State','select',[['','Same as shop'],...stateOpts]]],k=>{
+  const f=k==='name'&&S.custs.find(c=>same(c.name,S.cust.name));if(f){Object.assign(S.cust,f);refill($('cust'),S.cust)}});
+ fields($('meta'),S.meta,[['no','Invoice number'],['date','Date','date']]);
+ $('items').innerHTML='';
+ S.items.forEach((it,i)=>{
+  const d=document.createElement('div');d.className='item';const g=document.createElement('div');g.className='g';g.style.marginTop=0;d.append(g);
+  fields(g,it,[['name','Product name *','text',S.prods.map(p=>p.name),1],['qty','Quantity *','number'],['rate','Price ₹ (before GST) *','number'],['gst','GST %','select',[0,0.25,3,5,12,18,28,40].map(r=>[r,r+'%'])],['disc','Discount %','number'],['unit','Unit'],['hsn','HSN/SAC code']],k=>{
+   const f=k==='name'&&S.prods.find(p=>same(p.name,it.name));if(f){Object.assign(it,f);refill(g,it)}});
+  if(S.items.length>1){const b=document.createElement('button');b.textContent='Remove';b.className='danger';b.style.marginTop='10px';b.onclick=()=>{S.items.splice(i,1);save();forms();render()};d.append(b)}
+  $('items').append(d);
+ });
+ $('tpls').innerHTML='';
+ for(const id of['classic','modern','elegant','minimal','bold']){
+  const b=document.createElement('button');b.textContent=id[0].toUpperCase()+id.slice(1);b.className=S.tpl===id?'on':'';b.onclick=()=>{S.tpl=id;save();forms();render()};$('tpls').append(b);
+ }
+}
+function shopForms(){
+ fields($('shop'),S.shop,[['name','Shop name *','text',null,1],['gstin','GSTIN *','text',null,1],['state','State','select',stateOpts,1],['address','Address','area',null,1],['phone','Phone','tel',null,1],['bank','Bank / UPI details','area',null,1],['terms','Terms and conditions','area',null,1]]);
+ $('images').innerHTML='';
+ for(const[k,t]of[['logo','Shop logo'],['sign','Signature']]){
+  const w=document.createElement('div');w.className='wide';w.innerHTML=`<label>${t}<input type="file" accept="image/png,image/jpeg,image/webp"></label>${S.shop[k]?`<img class="thumb" src="${esc(S.shop[k])}" alt="${t}"><br><button class="danger">Remove</button>`:''}`;
+  w.querySelector('input').onchange=e=>{const f=e.target.files[0];if(!f)return;const img=new Image(),u=URL.createObjectURL(f);
+   img.onload=()=>{const s=Math.min(1,400/img.width,200/img.height),c=document.createElement('canvas');c.width=img.width*s;c.height=img.height*s;c.getContext('2d').drawImage(img,0,0,c.width,c.height);S.shop[k]=c.toDataURL('image/png');URL.revokeObjectURL(u);save();shopForms();render()};
+   img.onerror=()=>fail('That image could not be read.');img.src=u};
+  const b=w.querySelector('button');if(b)b.onclick=()=>{S.shop[k]='';save();shopForms();render()};
+  $('images').append(w);
+ }
+}
+function render(){
+ const sh=S.shop,c=S.cust,pos=c.state||sh.state,inter=interstate(S),r=calc(S.items,inter);
+ const party=(title,p,code)=>`<div>${title}<br><strong>${esc(p.name)||'—'}</strong><p>${esc(p.address)}</p>${p.phone?'Phone: '+esc(p.phone)+'<br>':''}${p.gstin?'GSTIN: <strong>'+esc(p.gstin)+'</strong><br>':''}State: ${STATES[code]}, Code ${code}</div>`;
+ const tax=inter?['IGST']:['CGST','SGST'],hasDisc=r.lines.some(l=>l.disc2);
+ const rows=r.lines.map((l,i)=>`<tr><td>${i+1}</td><td class="l">${esc(l.name)}</td><td>${esc(l.hsn)}</td><td>${esc(l.qty)} ${esc(l.unit)}</td><td>${money(Math.round((+l.rate||0)*100))}</td>${hasDisc?`<td>${money(l.disc2)}</td>`:''}<td>${money(l.value)}</td>${tax.map(()=>`<td>${money(l.tax/tax.length)}<br><small>${+l.gst/tax.length}%</small></td>`).join('')}<td>${money(l.value+l.tax)}</td></tr>`).join('');
+ const sum=(n,v)=>`<span>${n}</span><span class="r">${money(v)}</span>`;
+ const taxSum=inter?sum('IGST',r.igst):sum('CGST',r.cgst)+sum('SGST',r.sgst);
+ $('inv').className=S.tpl;
+ $('inv').innerHTML=`<div class="head"><div>${sh.logo?`<img class="logo" src="${esc(sh.logo)}" alt=""/>`:''}<h1>${esc(sh.name)||'Your Shop'}</h1>GSTIN: ${esc(sh.gstin)||'—'}</div><div class="r"><strong style="font-size:18px">TAX INVOICE</strong><br>Invoice No: <strong>${esc(S.meta.no)}</strong><br>Date: ${esc(S.meta.date.split('-').reverse().join('/'))}<br>Place of Supply: ${STATES[pos]} (${pos})<br>Reverse Charge: No</div></div>
+<div class="parties">${party('Seller',sh,sh.state)}${party('Bill To',c,pos)}</div>
+<table><thead><tr><th>#</th><th class="l">Description</th><th>HSN/SAC</th><th>Qty</th><th>Rate</th>${hasDisc?'<th>Discount</th>':''}<th>Taxable</th>${tax.map(t=>`<th>${t}</th>`).join('')}<th>Amount</th></tr></thead><tbody>${rows}</tbody></table>
+<div class="tot">${sum('Taxable Value',r.taxable)}${taxSum}${sum('Round Off',r.roundOff)}<b>Total</b><b class="r">₹${money(r.total)}</b></div>
+<div>Amount in words: <strong>Rupees ${words(r.total/100)} Only</strong></div>
+<div class="foot"><div>${sh.bank?'<strong>Payment details</strong><p>'+esc(sh.bank)+'</p>':''}${sh.terms?'<strong>Terms</strong><p>'+esc(sh.terms)+'</p>':''}</div><div class="r">For ${esc(sh.name)}<br>${sh.sign?`<img class="sign" src="${esc(sh.sign)}" alt=""/>`:'<br><br>'}<br>Authorised Signatory</div></div>`;
+ $('totals').innerHTML=[['Amount before tax',r.taxable],['GST',r.cgst+r.sgst+r.igst],['Round off',r.roundOff]].map(([n,v])=>`<div class="line"><span>${n}</span><span>₹${money(v)}</span></div>`).join('')+`<div class="line big"><span>Total</span><span>₹${money(r.total)}</span></div>`;
+ $('who').textContent=sh.name;
+ fit();
+}
+function fit(){const w=$('scroll').clientWidth;if(!w)return;const k=Math.min(1,w/794);$('inv').style.transform=`scale(${k})`;$('scroll').style.height=$('inv').offsetHeight*k+2+'px'}
+
+function lists(){
+ const q=$('q').value.toLowerCase();
+ const fill=(box,arr,empty,make)=>{box.innerHTML=arr.length?'':`<p class="hint" style="margin-top:12px">${empty}</p>`;arr.forEach(x=>{const d=document.createElement('div');d.className='item';make(d,x);box.append(d)})};
+ const btn=(d,defs)=>{const row=document.createElement('div');row.className='row';defs.forEach(([t,cls,f])=>{const b=document.createElement('button');b.textContent=t;b.className=cls;b.onclick=f;row.append(b)});d.append(row)};
+ fill($('list'),S.history.filter(h=>(h.meta.no+' '+h.cust.name).toLowerCase().includes(q)),'No invoices yet.',(d,h)=>{
+  d.innerHTML=`<div class="line"><strong>${esc(h.meta.no)} · ${esc(h.cust.name)}</strong><strong>₹${money(calc(h.items,interstate(h)).total)}</strong></div><span class="hint">${esc(h.meta.date.split('-').reverse().join('/'))}</span>`;
+  btn(d,[['Open','',()=>{if(!confirm('Open this invoice? Anything unsaved in the current bill will be replaced.'))return;S.cust=copy(h.cust);S.items=copy(h.items);S.meta=copy(h.meta);S.editing=h.meta.no;save();forms();render();go('new')}],['Delete','danger',()=>{if(confirm('Delete '+h.meta.no+'?')){S.history=S.history.filter(x=>x!==h);if(S.editing===h.meta.no)S.editing='';save();lists()}}]])});
+ for(const[id,key,empty]of[['custs','custs','No customers yet.'],['prods','prods','No products yet.']])
+  fill($(id),S[key],empty,(d,x)=>{d.innerHTML=`<strong>${esc(x.name)}</strong><br><span class="hint">${key==='custs'?esc(x.phone):'₹'+esc(x.rate)+' · GST '+esc(x.gst)+'%'}</span>`;btn(d,[['Delete','danger',()=>{if(confirm('Delete '+x.name+'?')){S[key]=S[key].filter(y=>y!==x);save();lists();forms()}}]])});
+}
+function go(t){document.querySelectorAll('[data-tab]').forEach(s=>s.hidden=s.dataset.tab!==t);document.querySelectorAll('[data-go]').forEach(b=>b.classList.toggle('on',b.dataset.go===t));fail('');if(t==='shop')shopForms();else lists();scrollTo(0,0);fit()}
+
+function problems(){
+ const e=[],sh=S.shop,c=S.cust;
+ if(!sh.name.trim())e.push('My shop: enter the shop name');
+ if(!validGstin(sh.gstin))e.push('My shop: enter a valid GSTIN');
+ else if(sh.gstin.slice(0,2)!==sh.state)e.push('My shop: state does not match the GSTIN');
+ if(!c.name.trim())e.push('Enter the customer name');
+ if(c.gstin&&!validGstin(c.gstin))e.push('Customer GSTIN is not valid');
+ else if(c.gstin&&c.state&&c.gstin.slice(0,2)!==c.state)e.push('Check customer state: it differs from the GSTIN');
+ if(S.items.some(i=>!i.name.trim()||!(+i.qty>0)||!(+i.rate>0)))e.push('Each product needs a name, quantity and price');
+ if(S.items.some(i=>+i.disc<0||+i.disc>100))e.push('Discount must be between 0 and 100');
+ if(!S.meta.no.trim()||!S.meta.date)e.push('Enter invoice number and date');
+ else if(S.meta.no!==S.editing&&S.history.some(h=>h.meta.no===S.meta.no))e.push('This invoice number is already used');
+ return e;
+}
+function record(){
+ const h={shop:{state:S.shop.state},cust:copy(S.cust),items:copy(S.items),meta:copy(S.meta)};
+ S.history=[h,...S.history.filter(x=>x.meta.no!==h.meta.no&&x.meta.no!==S.editing)];S.editing=h.meta.no;
+ const up=(arr,x)=>[x,...arr.filter(y=>!same(y.name,x.name))];
+ S.custs=up(S.custs,copy(S.cust));
+ S.items.forEach(({name,hsn,unit,rate,gst})=>S.prods=up(S.prods,{name,hsn,unit,rate,gst}));
+ save();forms();
+}
+const ready=()=>{const e=problems();fail(e.join('\n'));return !e.length};
+// PDF: the invoice is drawn to an image and wrapped in an A4 PDF, with no library.
+async function makePdf(){
+ const el=$('inv').cloneNode(true);el.style.transform='none';el.setAttribute('xmlns','http://www.w3.org/1999/xhtml');
+ const H=$('inv').offsetHeight,top=$('inv').getBoundingClientRect(),k=top.width/794;
+ const edges=[...$('inv').querySelectorAll('tr,.tot,.foot,.tot~div')].map(n=>(n.getBoundingClientRect().top-top.top)/k);
+ const xml=new XMLSerializer().serializeToString(el);
+ const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="1588" height="${H*2}" viewBox="0 0 794 ${H}"><foreignObject width="794" height="${H}"><div xmlns="http://www.w3.org/1999/xhtml"><style>${$('invcss').textContent}</style>${xml}</div></foreignObject></svg>`;
+ const img=new Image();img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);await img.decode();await new Promise(r=>setTimeout(r,150));
+ const pages=[];let y=0;
+ while(y<H-2){let end=y+1123;if(end<H-2){const cut=Math.max(0,...edges.filter(e=>e>y+300&&e<=end));if(cut)end=cut}
+  const c=document.createElement('canvas');c.width=1588;c.height=2246;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);
+  const h=Math.min(end,H)-y;x.drawImage(img,0,y*2,1588,h*2,0,0,1588,h*2);
+  pages.push(Uint8Array.from(atob(c.toDataURL('image/jpeg',.92).split(',')[1]),ch=>ch.charCodeAt(0)));y=end}
+ const parts=[],off=[];let len=0;
+ const put=d=>{const b=typeof d==='string'?new TextEncoder().encode(d):d;parts.push(b);len+=b.length};
+ const obj=(n,body,stream)=>{off[n]=len;put(`${n} 0 obj\n${body}\n`);if(stream){put('stream\n');put(stream);put('\nendstream\n')}put('endobj\n')};
+ put('%PDF-1.4\n');obj(1,'<</Type/Catalog/Pages 2 0 R>>');
+ obj(2,`<</Type/Pages/Count ${pages.length}/Kids[${pages.map((_,i)=>3+i*3+' 0 R').join(' ')}]>>`);
+ pages.forEach((j,i)=>{const n=3+i*3,draw='q 595 0 0 842 0 0 cm /I Do Q';
+  obj(n,`<</Type/Page/Parent 2 0 R/MediaBox[0 0 595 842]/Resources<</XObject<</I ${n+2} 0 R>>>>/Contents ${n+1} 0 R>>`);
+  obj(n+1,`<</Length ${draw.length}>>`,draw);
+  obj(n+2,`<</Type/XObject/Subtype/Image/Width 1588/Height 2246/ColorSpace/DeviceRGB/BitsPerComponent 8/Filter/DCTDecode/Length ${j.length}>>`,j)});
+ const xref=len,n=off.length;
+ put(`xref\n0 ${n}\n0000000000 65535 f \n`+off.slice(1).map(o=>String(o).padStart(10,'0')+' 00000 n \n').join('')+`trailer\n<</Size ${n}/Root 1 0 R>>\nstartxref\n${xref}\n%%EOF`);
+ const name=(S.meta.no+' '+S.cust.name).replace(/[\\/:*?"<>|]/g,'-')+'.pdf';
+ return new File(parts,name,{type:'application/pdf'});
+}
+function saveFile(f){const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download=f.name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),60000)}
+const printIt=()=>window.print();
+const pdfError=()=>fail('This browser could not create the PDF. Use Print and choose "Save as PDF".');
+function waNumber(p){let d=String(p).replace(/\D/g,'').replace(/^0+/,'');if(d.length===10)d='91'+d;return d.length>=11&&d.length<=15?d:''}
+const message=()=>`Hello ${S.cust.name}, here is your invoice ${S.meta.no} from ${S.shop.name}. Total: ₹${money(calc(S.items,interstate(S)).total)}. Thank you!`;
+let pdf=null;
+$('dl').onclick=async()=>{if(!ready())return;$('dl').disabled=true;try{saveFile(await makePdf());record()}catch(e){pdfError()}$('dl').disabled=false};
+$('print').onclick=()=>{if(!ready())return;record();printIt()};
+$('send').onclick=async()=>{if(!ready())return;if(!waNumber(S.cust.phone))return fail('Enter the customer\'s 10-digit WhatsApp number');
+ $('send').disabled=true;
+ try{pdf=await makePdf();record();$('dmsg').textContent=`${S.cust.name} · +${waNumber(S.cust.phone)}`;
+  const can=!!(navigator.canShare&&navigator.canShare({files:[pdf]}));$('shareRow').hidden=$('shareHint').hidden=!can;$('dlg').showModal()}catch(e){pdfError()}
+ $('send').disabled=false};
+$('chat').onclick=()=>{saveFile(pdf);window.open(`https://wa.me/${waNumber(S.cust.phone)}?text=${encodeURIComponent(message())}`,'_blank')};
+$('share').onclick=()=>navigator.share({files:[pdf],text:message()}).catch(e=>{if(e.name!=='AbortError')$('dmsg').textContent='Sharing failed. Use the chat button instead.'});
+$('close').onclick=()=>$('dlg').close();
+$('add').onclick=()=>{S.items.push(blankItem());save();forms();render()};
+$('next').onclick=()=>{if(S.editing!==S.meta.no&&!confirm('This bill is not saved yet. Discard it?'))return;
+ let no=S.history.length?S.history[0].meta.no:S.meta.no;
+ if(S.history.length)do{no=/\d+$/.test(no)?no.replace(/\d+$/,n=>String(+n+1).padStart(n.length,'0')):no+'-2'}while(S.history.some(h=>h.meta.no===no));
+ S.meta={no,date:today()};S.cust=blankCust();S.items=[blankItem()];S.editing='';save();forms();render();scrollTo(0,0)};
+$('backup').onclick=()=>saveFile(new File([JSON.stringify(S)],'billbook-backup-'+today()+'.json',{type:'application/json'}));
+$('restore').onclick=()=>$('file').click();
+$('file').onchange=async e=>{try{const d=JSON.parse(await e.target.files[0].text());if(!d.shop||!Array.isArray(d.items)||!Array.isArray(d.history))throw 0;if(confirm('Replace all data on this device with this backup?')){S=Object.assign(fresh(),d);save();forms();shopForms();render()}}catch(x){fail('This is not a valid backup file.')}e.target.value=''};
+$('q').oninput=lists;
+document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
+onresize=fit;
+forms();render();go(S.shop.name?'new':'shop');
+if(!storageOk)fail('This browser is blocking storage, so data will not be saved.');
+</script>
+</body>
+</html>
